@@ -19,11 +19,34 @@ CREATE TABLE IF NOT EXISTS contacts (
 )''')
 conn.commit()
 
-# Insert default login
 cursor.execute('SELECT * FROM users WHERE username = ?', ('admin',))
 if not cursor.fetchone():
     cursor.execute('INSERT INTO users (username, password) VALUES (?, ?)', ('admin', '1234'))
     conn.commit()
+
+# Global theme state
+dark_mode = False
+
+# Theme Switcher
+def switch_theme():
+    global dark_mode
+    dark_mode = not dark_mode
+    bg = '#2e2e2e' if dark_mode else 'SystemButtonFace'
+    fg = 'white' if dark_mode else 'black'
+
+    root.configure(bg=bg)
+    login_frame.configure(style="Dark.TFrame" if dark_mode else "TFrame")
+    for widget in login_frame.winfo_children():
+        if isinstance(widget, ttk.Entry) or isinstance(widget, ttk.Label) or isinstance(widget, ttk.Button):
+            widget.configure(style="Dark.TLabel" if dark_mode else "TLabel")
+
+    if dark_mode:
+        style.configure("Dark.TFrame", background=bg)
+        style.configure("Dark.TLabel", background=bg, foreground=fg)
+        style.configure("Dark.TButton", background=bg, foreground=fg)
+        theme_button.configure(text="Switch to Light Mode", style="Dark.TButton")
+    else:
+        theme_button.configure(text="Switch to Dark Mode", style="TButton")
 
 # Functions
 def login():
@@ -84,6 +107,8 @@ root = tk.Tk()
 root.title("Advanced User Manager")
 root.geometry("600x500")
 
+style = ttk.Style(root)
+
 # Login Frame
 login_frame = ttk.Frame(root, padding=20)
 login_frame.pack(expand=True)
@@ -96,7 +121,11 @@ ttk.Label(login_frame, text="Password").grid(row=1, column=0)
 entry_password = ttk.Entry(login_frame, show='*')
 entry_password.grid(row=1, column=1)
 
-ttk.Button(login_frame, text="Login", command=login).grid(row=2, column=0, columnspan=2)
+ttk.Button(login_frame, text="Login", command=login).grid(row=2, column=0, columnspan=2, pady=10)
+
+# Theme Toggle Button
+theme_button = ttk.Button(login_frame, text="Switch to Dark Mode", command=switch_theme)
+theme_button.grid(row=3, column=0, columnspan=2)
 
 # Main App
 def main_app():
@@ -127,7 +156,6 @@ def main_app():
     tree.heading('Email', text='Email')
     tree.pack(pady=10, fill='x')
 
-    # Search bar
     search_frame = ttk.Frame(app_frame)
     search_frame.pack(pady=5)
 
